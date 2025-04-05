@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skin Tech - About</title>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Skin Tech Logo" width="100">
+            <nav>
+                <a href="{{ url_for('index') }}" class="nav-link">Home</a>
+                <a href="{{ url_for('about') }}" class="nav-link">About</a>
+                <a href="{{ url_for('help_page') }}"class="nav-link">Help</a>
+                <a href="{{ url_for('tutorial') }}" class="nav-link">Tutorial</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="hero">
+        <h1>What is SkinTech?</h1>
+    </div>
+
+    <div class="content-container">
+        <div class="content">
+            <section class="section">
+                <h2>Our Mission</h2>
+                <p>At Skin Tech, we believe everyone deserves access to personalized skincare solutions. We leverage the power of artificial intelligence to provide accurate skin analysis and tailored recommendations, empowering you to achieve your best skin.</p>
+            </section>
+            <section class="section">
+                <h2>How It Works</h2>
+                <p>Our advanced AI algorithms analyze your skin from uploaded images, taking into account various factors like texture, tone, and potential concerns. Based on this analysis, we provide personalized product and routine recommendations to address your specific needs.</p>
+            </section>
+            <section class="section">
+                <h2>Why Choose Skin Tech?</h2>
+                <ul>
+                    <li>Personalized skincare advice tailored to your unique skin.</li>
+                    <li>AI-powered analysis for accurate and reliable results.</li>
+                    <li>Convenient and accessible from the comfort of your home.</li>
+                    <li>Expert recommendations to help you achieve your skincare goals.</li>
+                </ul>
+            </section>
+            <section class="section contact">
+                <h2>Contact Us</h2>
+                <p>Have questions or need assistance? Reach out to us at <a href="mailto:support@skintech.com" class="contact-button">support@skintech.com</a>.</p>
+            </section>
+        </div>
+    </div>
+</body>
+</html>
