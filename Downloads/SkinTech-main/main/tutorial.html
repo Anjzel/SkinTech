@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skin Tech - Tutorial</title>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tutorial.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Skin Tech Logo" width="100">
+            <nav>
+                <a href="{{ url_for('index') }}"class="nav-link">Home</a>
+                <a href="{{ url_for('about') }}" class="nav-link">About</a>
+                <a href="{{ url_for('help_page') }}"class="nav-link">Help</a>
+                <a href="{{ url_for('tutorial') }}" class="active">Tutorial</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="hero">
+        <h1>How to use SkinTech?</h1>
+    </div>
+
+    <div class="content-container">
+        <div class="content">
+            <h2>How to Properly Upload and Capture Your Face</h2>
+<br>
+
+            <section class="step">
+                <h2>1. Upload an Image</h2>
+                <p>Click on the <strong>"Upload Image"</strong> button to select an image from your device.</p>
+                <img src="static\images\uploadfirst.jpg" alt="UploadFirst" class="uploadfirst">
+
+                <p>This allows the user to select an image to upload from their device.</p>
+                <img src="static\images\uploadsecond.jpg" alt="UploadSecond" class="uploadsecond">
+            </section>
+
+            <section class="step">
+                <h2>2. Capturing Your Face</h2>
+                <p>Click on the <strong>"Capture Face"</strong> button to take a picture using your device's camera.</p>
+            <img src="static\images\capturefirst.jpg" alt="CaptureFirst" class="capturefirst">
+
+                <p>It allows the user to capture their face using their camera. </p>
+            <img src="static\images\capturesecond.jpg" alt="CaptureSecond" class="capturesecond">
+
+                <p>This is where the system detects the face of the user and submits their captured images. Also, the user must capture three sides (front,left and right) of the face.</p>
+            <img src="static\images\capturethird.jpg" alt="CaptureThird" class="capturethird">
+            </section>
+
+                <p> This section allows the user to select what type of skin care category they prefer for the recommendation.
+                </p>
+            <img src="static\images\recommendationfirst.jpg" alt="RecommendationFirst" class="recommendationfirst">
+            <section class="step">
+                
+                <h2>3. Results</h2>
+                <p>After submitting the images, it will show you the results page of the personalized recommendation skin care products. This section shows the skin analysis, recommended skin care products, and beneficial ingredients for the type of skin. Lastly, users can download the results on a PDF file.
+                </p>
+                <img src="static\images\resultsfirst.jpg" alt="ResultsFirst" class="resultsfirst">
+            </section>
+            </section>
+
+            <section class="step">
+                <h2>4. Reports</h2>
+                <p>This is the file of the downloaded facial skin care report, the content includes skin type & sensitivity, beneficial ingredients, skin analysis and recommended products.</p>
+                <img src="static\images\skinreportfirst.jpg" alt="SkinreportFirst" class="skinreportfirst">
+            </section>
+        </div>
+    </div>
+</body>
+</html>

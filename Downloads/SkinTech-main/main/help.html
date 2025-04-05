@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Skin Tech - Help</title>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/help.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Skin Tech Logo" width="100">
+            <nav>
+                <a href="{{ url_for('index') }}">Home</a>
+                <a href="{{ url_for('about') }}">About</a>
+                <a href="{{ url_for('help_page') }}" class="active">Help</a>
+                <a href="{{ url_for('tutorial') }}" class="nav-link">Tutorial</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="content-container">
+        <div class="content">
+            <h1>Frequently Asked Questions</h1>
+            <section class="faq">
+                <h2>How do I upload an image?</h2>
+                <p>Click on the "Upload Image" button and select the image file from your device.</p>
+            </section>
+            <section class="faq">
+                <h2>Can I capture my face directly?</h2>
+                <p>Yes, click on the "Capture Face" button to use your device's camera to take a photo of your face.</p>
+            </section>
+            <section class="faq">
+                <h2>What are Skin Preferences?</h2>
+                <p>Skin Preferences allow you to select your preferred skincare products (Cleanser, Exfoliator, etc.) for more personalized analysis and recommendations.</p>
+            </section>
+            <section class="faq">
+                <h2>How accurate is the AI analysis?</h2>
+                <p>Our AI is trained on a vast dataset and is designed to provide accurate analysis. However, individual results may vary.</p>
+            </section>
+            <section class="faq">
+                <h2>How do I contact support?</h2>
+                <p>You can reach our support team by emailing us at <a href="mailto:support@skintech.com" class="contact-button">support@skintech.com</a>.</p>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

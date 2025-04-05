@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skincare Recommendations</title>
+    <link rel="stylesheet" href="/static/css/results.css">
+    <style>
+        .key-ingredient {
+            display: inline-block;
+            background-color: #e3f2fd;
+            border-radius: 12px;
+            padding: 3px 10px;
+            margin: 2px;
+            font-size: 0.9em;
+            color: #1976d2;
+        }
+        .ingredients-section {
+            margin-top: 10px;
+        }
+        .no-match {
+            font-style: italic;
+            color: #757575;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Personalized Facial Skincare Recommendation</h2>
+
+        <div class="results-box">
+            <div class="left">
+                <h3>Your Facial Skin Analysis:</h3>
+                <div class="skin-analysis">
+                    {% if image_filenames %}
+                    <div class="image-gallery">
+                        {% for pos, filename in image_filenames.items() %}
+                        <img src="{{ url_for('static', filename='images/' + filename) }}"
+                            alt="Captured Image - {{ pos }}" class="skin-image">
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p>No images available.</p>
+                    {% endif %}
+
+                    <p>Your detected skin type: <strong>{{ skin_type.capitalize() }}</strong></p>
+                    
+                    <p>Your skin sensitivity:
+                        <strong class="{% if sensitivity == 'Sensitive' %}sensitive-highlight{% endif %}">
+                            {{ sensitivity }}
+                        </strong>
+                    </p>
+
+                    <p class="skin-analysis-text"><strong>Skin Analysis:</strong> {{ skin_analysis }}</p>
+
+                    <div class="recommended-ingredients">
+                        <p><strong>Beneficial ingredients for {{ skin_type }} skin:</strong></p>
+                        <div>
+                            {% for ingredient in skin_type_ingredients[skin_type.capitalize()] %}
+                                <span class="key-ingredient">{{ ingredient }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right">
+                <h3>Recommended Facial Skin Products</h3>
+                {% for product in recommendations %}
+                <div class="product-card">
+                    <h3>{{ product.name }}</h3>
+                    <p class="prodtype"><strong>Category:</strong> {{ product.prodtypes }}</p>
+                    
+                    <!-- New ingredients section -->
+                    <div class="ingredients-section">
+                        <p><strong>Key ingredients:</strong></p>
+                        {% set found_ingredients = [] %}
+                        {% for ingredient in skin_type_ingredients[skin_type.capitalize()] %}
+                            {% if ingredient.lower() in product.ingredients|lower %}
+                                <span class="key-ingredient">{{ ingredient }}</span>
+                                {% set _ = found_ingredients.append(ingredient) %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if found_ingredients|length == 0 %}
+                            <span class="no-match">No specific ingredients for your skin type found</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="description">
+                        {{ product.description[:150] }}<span class="dots">...</span>
+                        <span class="more-text" style="display: none;">{{ product.description[150:] }}</span>
+                        <span class="read-more" onclick="toggleDescription(this)">Read More</span>
+                    </p>
+                </div>
+                <hr class="divider">
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="footer">
+            <form action="{{ url_for('download_pdf') }}" method="GET">
+                <button type="submit" class="save-report-btn">Save as PDF</button>
+            </form>
+            <a href="{{ url_for('index') }}" class="back-home">Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        function toggleDescription(element) {
+            let description = element.closest('.description');
+            let dots = description.querySelector('.dots');
+            let moreText = description.querySelector('.more-text');
+            
+            if (moreText.style.display === "none" || moreText.style.display === "") {
+                moreText.style.display = "inline";
+                dots.style.display = "none";
+                element.textContent = " Read Less";
+            } else {
+                moreText.style.display = "none";
+                dots.style.display = "inline";
+                element.textContent = " Read More";
+            }
+        }
+    </script>
+</body>
+</html>

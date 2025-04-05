@@ -1,0 +1,207 @@
+/* about.css */
+
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+.site-header {
+    background-color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.site-header a {
+    color: #6a5acd;
+    text-decoration: none;
+    margin-left: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    transition: font-size 0.3s ease, font-weight 0.3s ease; /* Add transitions for smooth effects */
+}
+
+.site-header a.active {
+    color: purple;
+}
+
+.site-header a:hover {
+    text-decoration: underline; /* Add underline on hover */
+    font-size: 1.3rem; /* Increase font size on hover */
+    font-weight: 700; /* Make font bolder on hover */
+}
+
+
+.hero {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.hero h1 {
+    color: rgb(8, 6, 8);
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+.section {
+    margin-bottom: 40px;
+}
+
+.section h2 {
+    color: rgb(17, 16, 17);
+    margin-bottom: 20px;
+}
+
+.section p {
+    line-height: 1.6;
+}
+
+.section ul {
+    list-style-type: disc;
+    margin-left: 20px;
+}
+
+.section li {
+    line-height: 1.6;
+}
+
+.contact-button {
+    background-color: transparent;
+    border: none;
+    color: purple;
+    font-size: 1em;
+    padding: 10px 20px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.contact-button:hover {
+    text-decoration: underline;
+}
+
+.header-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    height: 60px;
+}
+
+nav {
+    display: flex;
+    gap: 30px;
+}
+
+.nav-link {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #6a5acd;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #483d8b;
+    text-decoration: underline;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 0;
+    background-color: #f9f9f9;
+    text-align: center;
+}
+
+.content-container {
+    max-width: 900px;
+    margin: 40px auto; /* Increased margin for better spacing */
+    background: white;
+    padding: 40px; /* Increased padding */
+    border-radius: 12px; /* Smoother corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* More pronounced shadow */
+    text-align: left;
+    overflow: visible;
+    font-size: 1.1em; /* Slightly larger text */
+    line-height: 1.7; /* Improved line spacing */
+    color: #444; /* Slightly darker text */
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 25px; /* More space below headings */
+    font-weight: 600;
+}
+
+.content-container p {
+    text-align: justify; /* Justify paragraph text */
+    margin-bottom: 20px; /* Space between paragraphs */
+}
+
+.content-container .step {
+    width: 100%;
+    margin-bottom: 40px; /* More space between steps */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.content-container .step img {
+    width: 500px;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 8px; /* Slightly rounded corners for images */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px 0; /* More margin around images */
+    box-sizing: border-box;
+}
+
+.content-container h2 {
+    margin-bottom: 15px; /* Space below step headings */
+    color: #333;
+    font-weight: 600;
+}
+
+
+h1 {
+    color: #2c3e50;
+    font-size: 3.5rem; /* Increased font size */
+    margin-bottom: 30px; /* Increased margin */
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 20px; /* Increased padding */
+    text-align: center; /* Center heading */
+}
+
+h1:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px; /* Increased width of underline */
+    height: 6px; /* Increased height of underline */
+    background: linear-gradient(to right, #6a5acd, #8a6eff);
+    border-radius: 3px; /* Increased border-radius */
+}
+
+h2 {
+    
+    text-align: center;
+
+}

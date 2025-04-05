@@ -1,0 +1,51 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd  
+
+# URL of Watsons skincare section
+url = "https://www.watsons.com.ph/skin-care/lc/010000"
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+}
+
+# Define keywords for different skin types
+skin_types = {
+    "Normal Skin": ["normal skin", "all skin types", "for all"],
+    "Dry Skin": ["dry skin", "hydrating", "moisturizing", "intense moisture"],
+    "Oily Skin": ["oily skin", "oil control", "mattifying", "anti-shine"],
+    "Combination Skin": ["combination skin", "balancing"],
+    "Sensitive Skin": ["sensitive skin", "gentle", "fragrance-free", "hypoallergenic"]
+}
+
+def detect_skin_type(name):
+    name_lower = name.lower()
+    for skin_type, keywords in skin_types.items():
+        if any(keyword in name_lower for keyword in keywords):
+            return skin_type
+    return "Unknown"  # Default if no match is found
+
+response = requests.get(url, headers=headers)
+
+if response.status_code == 200:
+    soup = BeautifulSoup(response.text, "html.parser")
+    products = soup.find_all("div", class_="product-tile")
+
+    data = []
+    for product in products:
+        name = product.find("a", class_="product-name").text.strip()
+        price = product.find("span", class_="price").text.strip()
+        product_url = "https://www.watsons.com.ph" + product.find("a")["href"]
+
+        # Detect skin type
+        skin_type = detect_skin_type(name)
+
+        data.append([name, price, product_url, skin_type])
+
+    # Save to CSV
+    df = pd.DataFrame(data, columns=["Product Name", "Price", "URL", "Skin Type"])
+    df.to_csv("watsons_skincare_products.csv", index=False, encoding="utf-8")
+
+    print("Data saved to watsons_skincare_products.csv ✅")
+else:
+    print("Failed to retrieve the page ❌")

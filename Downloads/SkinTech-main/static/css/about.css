@@ -1,0 +1,138 @@
+/* about.css */
+
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.site-header {
+    background-color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.site-header a {
+    color: #6a5acd;
+    text-decoration: none;
+    margin-left: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    transition: font-size 0.3s ease, font-weight 0.3s ease; /* Add transitions for smooth effects */
+}
+
+.site-header a.active {
+    color: purple;
+}
+
+.site-header a:hover {
+    text-decoration: underline; /* Add underline on hover */
+    font-size: 1.3rem; /* Increase font size on hover */
+    font-weight: 700; /* Make font bolder on hover */
+}
+
+.hero {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.hero h1 {
+    color: rgb(0, 0, 0);
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+.content-container {
+    background-color: white;
+    padding: 40px;
+    max-width: 900px;
+    margin: 40px auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Keep the existing shadow for content */
+}
+
+.content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.section {
+    margin-bottom: 40px;
+}
+
+.section h2 {
+    color: purple;
+    margin-bottom: 20px;
+}
+
+.section p {
+    line-height: 1.6;
+}
+
+.section ul {
+    list-style-type: disc;
+    margin-left: 20px;
+}
+
+.section li {
+    line-height: 1.6;
+}
+
+/* Updated contact link styling */
+.contact-button {
+    background-color: transparent;
+    border: none;
+    color: purple;
+    font-size: 1em;
+    padding: 10px 20px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.contact-button:hover {
+    text-decoration: underline;
+}
+
+.header-container {
+    width: 100%;
+    max-width: 1400px; /* Adjust for responsiveness */
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Logo styling */
+.logo {
+    height: 60px; /* Adjust as needed */
+}
+
+/* Navigation */
+nav {
+    display: flex;
+    gap: 30px; /* Space between About and Help */
+}
+
+.nav-link {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #6a5acd;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #483d8b;
+    text-decoration: underline;
+}

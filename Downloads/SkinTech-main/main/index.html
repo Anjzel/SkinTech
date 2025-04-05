@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://docs.opencv.org/4.5.0/opencv.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Welcome to Skin Tech</title>
+    <link rel="stylesheet" href="static/css/index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <header class="site-header">
+        <div class="header-container">
+            <img src="static/images/logo.png" alt="Skin Tech Logo" class="logo">
+            <nav>
+                <a href="{{ url_for('index') }}" class="nav-link">Home</a>
+                <a href="{{ url_for('about') }}" class="nav-link">About</a>
+                <a href="{{ url_for('help_page') }}" class="nav-link">Help</a>
+                <a href="{{ url_for('tutorial') }}" class="nav-link">Tutorial</a>
+            </nav>
+        </div>
+    </header>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+                <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+<p> TESTTESTTESTTEST</p>
+    <div class="hero-section">
+        <h1>Unlock Your Skin's Potential</h1>
+        <p>Revolutionize your skincare routine with AI-powered analysis and personalized recommendations.</p>
+        <div class="button-group">
+            <form id="uploadForm" action="/results" method="POST" enctype="multipart/form-data">
+                <input type="file" id="fileInput" name="image" accept="image/*" style="display:none;">
+                <input type="hidden" id="capturedImageLeft" name="image_left">
+                <input type="hidden" id="capturedImageCenter" name="image_center">
+                <input type="hidden" id="capturedImageRight" name="image_right">
+                <button type="button" id="uploadButton" class="button">Upload Image</button>
+                <button type="button" id="captureButton" class="button">Capture Face</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container" id="main-content">
+        <!-- Image Preview Section -->
+        <div class="image-preview-section">
+            <div id="image-container" class="image-container">
+                <!-- Images will be inserted here dynamically -->
+            </div>
+            
+            <div class="button-container">
+                <button id="clearAllButton" type="button" class="clear-button disabled">
+                    Clear All Images
+                </button>
+            </div>
+        </div>
+
+        <h2>Your Skin Preferences</h2>
+        <div class="preferences-box">
+            <p>Select your skin preferences for a more personalized analysis:</p>
+            <form action="/submit_preferences" method="POST" class="preferences-form">
+                <div class="preference-list">
+                    <div class="preference-item">
+                        <input type="checkbox" id="cleanser" name="preferences" value="Cleanser">
+                        <label for="cleanser">Cleanser</label>
+                    </div>
+                    <div class="preference-item">
+                        <input type="checkbox" id="exfoliator" name="preferences" value="Exfoliator">
+                        <label for="exfoliator">Exfoliator</label>
+                    </div>
+                    <div class="preference-item">
+                        <input type="checkbox" id="moisturizer" name="preferences" value="Moisturizer">
+                        <label for="moisturizer">Moisturizer</label>
+                    </div>
+                    <div class="preference-item">
+                        <input type="checkbox" id="serum" name="preferences" value="Serum">
+                        <label for="serum">Serum</label>
+                    </div>
+                    <div class="preference-item">
+                        <input type="checkbox" id="sunscreen" name="preferences" value="Sunscreen">
+                        <label for="sunscreen">Sunscreen</label>
+                    </div>
+                    <div class="preference-item">
+                        <input type="checkbox" id="toner" name="preferences" value="Toner">
+                        <label for="toner">Toner</label>
+                    </div>
+                </div>
+                <button type="submit" class="done-button">Done</button>
+            </form>
+        </div>  
+
+        <div id="instructions">
+            <p>
+                <strong>Instructions:</strong>
+                Position your face within the oval on the screen.  Ensure your face is well-lit and clearly visible.  For best results, remove any makeup and tie back your hair.  Click "Capture Image" to take a snapshot, or "Upload Image" to use an existing photo.
+            </p>
+        </div>
+        <div class="testimonial">
+            <p>"This app has completely transformed my skincare routine.  The AI analysis is incredibly accurate, and the personalized recommendations have made a noticeable difference in my skin!" - Happy User</p>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Skin Tech. All rights reserved.</p>
+            <p>Contact: support@skintech.com</p>
+        </div>
+    </footer>
+
+    <div id="about-page" style="display: none;">
+        <div class="container">
+            <h2>About Skin Tech</h2>
+            <p>
+                Skin Tech is a revolutionary web application that leverages the power of artificial intelligence to provide personalized skincare analysis and recommendations. Our mission is to empower individuals to make informed decisions about their skin health and achieve their skincare goals.
+            </p>
+            <p>
+                Using advanced AI algorithms, Skin Tech analyzes images of your skin to identify key attributes and concerns.  We then compare these findings against a vast database of skincare knowledge and user preferences to generate tailored product and routine recommendations.
+            </p>
+            <p>
+                Our team comprises experts in dermatology, computer vision, and machine learning, all dedicated to creating a cutting-edge, user-friendly experience.  We are committed to continuous improvement and staying at the forefront of skincare technology.
+            </p>
+            <p>
+                At Skin Tech, we believe that everyone deserves access to personalized skincare advice.  Whether you're dealing with specific skin concerns or simply want to maintain a healthy complexion, we're here to guide you on your journey to radiant skin.
+            </p>
+            <button class="done-button back-to-main">Back to Main</button>
+        </div>
+    </div>
+
+    <div id="help-page" style="display: none;">
+        <div class="container">
+            <h2>Frequently Asked Questions</h2>
+            <ul>
+                <li>
+                    <strong>How does Skin Tech work?</strong>
+                    <p>
+                        Skin Tech uses AI to analyze images of your skin.  You can upload an image or capture one using your device's camera.  The AI identifies skin attributes and concerns, and then provides personalized recommendations based on your preferences.
+                    </p>
+                </li>
+                <li>
+                    <strong>Is my data secure?</strong>
+                    <p>
+                        Yes, we take your privacy very seriously.  All images and data are processed securely and confidentially. We adhere to strict data privacy policies.
+                    </p>
+                </li>
+                <li>
+                    <strong>How accurate are the recommendations?</strong>
+                    <p>
+                        Our AI algorithms are trained on a vast dataset of skin images and skincare information, resulting in highly accurate analyses and recommendations.  However, individual results may vary.
+                    </p>
+                </li>
+                <li>
+                    <strong>Can I use Skin Tech if I have a skin condition?</strong>
+                    <p>
+                        Skin Tech can provide helpful insights, but it is not a substitute for professional medical advice.  If you have a specific skin condition, please consult a dermatologist.
+                    </p>
+                </li>
+                <li>
+                    <strong>How often should I use Skin Tech?</strong>
+                    <p>
+                        You can use Skin Tech as often as you like!  For best results, we recommend using it periodically to track changes in your skin and adjust your routine as needed.
+                    </p>
+                </li>
+                <li>
+                    <strong>Why am I asked for my skin preferences?</strong>
+                    <p>
+                        Providing your skin preferences allows Skin Tech to tailor the recommendations to your specific needs.  This ensures that the suggested products and routines are the most suitable for your skin type and concerns.
+                    </p>
+                </li>
+                <li>
+                    <strong>What do the buttons do?</strong>
+                    <p>
+                        The "Upload Image" button allows you to select a photo from your device's storage. The "Capture Image" button uses your device's camera to take a new photo. "Done" saves your preference selections.
+                    </p>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Load OpenCV.js -->
+    <script async src="https://docs.opencv.org/4.5.5/opencv.js" onload="opencvIsReady()"></script>
+</body>
+</html>

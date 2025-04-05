@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Preferences</title>
+    <link rel="stylesheet" href="/static/css/preferences.css">
+</head>
+<body>
+    <form action="/submit_preferences" method="POST">
+        <div class="preferences-box">
+            <h2>Select User Preferences:</h2>
+            <div class="preference-item">
+                <input type="checkbox" id="cleanser" name="preferences" value="Cleanser">
+                <label for="cleanser">Cleanser</label>
+            </div>
+            <div class="preference-item">
+                <input type="checkbox" id="exfoliators" name="preferences" value="Exfoliators">
+                <label for="exfoliators">Exfoliators</label>
+            </div>
+            <div class="preference-item">
+                <input type="checkbox" id="moisturizer" name="preferences" value="Moisturizer">
+                <label for="moisturizer">Moisturizer</label>
+            </div>
+            <div class="preference-item">
+                <input type="checkbox" id="serums" name="preferences" value="Serums">
+                <label for="serums">Serums</label>
+            </div>
+            <div class="preference-item">
+                <input type="checkbox" id="sunscreen" name="preferences" value="Sunscreen">
+                <label for="sunscreen">Sunscreen</label>
+            </div>
+            <div class="preference-item">
+                <input type="checkbox" id="toner" name="preferences" value="Toner">
+                <label for="toner">Toner</label>
+            </div>
+            <button type="submit" class="btn">Done</button>
+        </div>
+    </form>
+            
+    </form>
+</body>
+</html>
