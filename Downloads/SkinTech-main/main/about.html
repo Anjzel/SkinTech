@@ -13,17 +13,16 @@
         <div class="header-container">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Skin Tech Logo" width="100">
             <nav>
-                <a href="{{ url_for('index') }}">Home</a>
-                <a href="{{ url_for('about') }}" class="active">About</a>
-                <a href="{{ url_for('help_page') }}">Help</a>
+                <a href="{{ url_for('index') }}" class="nav-link">Home</a>
+                <a href="{{ url_for('about') }}" class="nav-link">About</a>
+                <a href="{{ url_for('help_page') }}"class="nav-link">Help</a>
                 <a href="{{ url_for('tutorial') }}" class="nav-link">Tutorial</a>
             </nav>
         </div>
     </header>
 
     <div class="hero">
-        <h1>Unlock Your Skin's Potential</h1>
-        <p>Revolutionize your skincare routine with AI-powered analysis and personalized recommendations.</p>
+        <h1>What is SkinTech?</h1>
     </div>
 
     <div class="content-container">

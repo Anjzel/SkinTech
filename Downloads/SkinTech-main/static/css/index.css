@@ -1062,7 +1062,7 @@ nav {
     opacity: 0.7;
 }
 
-/* Mobile Responsiveness */
+/* Mobile Responsiveness for Header*/
 @media screen and (max-width: 768px) {
     .container {
         width: 95%;
@@ -1153,10 +1153,7 @@ nav {
         aspect-ratio: 1;
     }
 
-    .site-header {
-        padding: 10px;
-    }
-
+    
     .header-container {
         flex-direction: column;
         gap: 10px;
@@ -1204,5 +1201,138 @@ nav {
 
     .preference-item label {
         font-size: 0.9rem;
+    }
+}
+
+
+
+/* ... (Your existing CSS) ... */
+
+/* Mobile Responsiveness for Content Below Header */
+@media screen and (max-width: 768px) {
+    .container {
+        width: 95%; /* Adjust container width */
+        padding: 20px; /* Adjust container padding */
+        margin: 15px auto; /* Adjust container margin */
+    }
+
+    h1 {
+        font-size: 2.2rem; /* Reduce heading font size */
+        margin-bottom: 20px;
+    }
+
+    p {
+        font-size: 1rem; /* Reduce paragraph font size */
+        margin-bottom: 25px;
+    }
+
+    .button-group {
+        flex-direction: column; /* Stack buttons vertically */
+        align-items: center;
+        gap: 15px; /* Adjust gap between buttons */
+        margin: 15px auto;
+    }
+
+    .button-group form {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    button, .capture-button, .done-button, .custom-button, .help-about-button {
+        width: 100%; /* Make buttons full width */
+        padding: 12px 20px; /* Adjust button padding */
+        font-size: 1rem;
+    }
+
+    .preferences-box {
+        margin-top: 30px; /* Adjust margin */
+    }
+
+    .preference-list {
+        flex-direction: column; /* Stack preferences vertically */
+        align-items: center;
+        gap: 15px;
+    }
+
+    .preference-item {
+        width: 95%; /* Adjust preference item width */
+        padding: 10px 15px;
+        gap: 10px;
+    }
+
+    .preference-item label {
+        font-size: 1rem;
+    }
+
+    .video-container {
+        max-width: 100%; /* Make video container full width */
+        border-radius: 15px;
+        margin: 20px auto;
+    }
+
+    #video, #canvas {
+        max-width: 100%;
+        border-radius: 15px;
+    }
+
+    #instructions {
+        padding: 15px;
+        font-size: 0.9rem;
+        margin: 20px auto;
+    }
+
+    .testimonial {
+        padding: 15px;
+        margin: 25px auto;
+        font-size: 0.95rem;
+    }
+
+    .testimonial::before {
+        font-size: 50px;
+        top: -15px;
+        left: 10px;
+    }
+
+    .image-container {
+        flex-direction: column;
+    }
+
+    .multi-image-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .individual-image-container {
+        width: 100%;
+        height: 200px;
+        margin: 5px 0;
+    }
+
+    .single-image-container {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1;
+    }
+
+    .image-label {
+        font-size: 16px;
+    }
+
+    .clear-button {
+      width: 100%;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    h1 {
+        font-size: 2rem;
+    }
+
+    p {
+        font-size: 0.9rem;
+    }
+
+    .preference-item {
+        width: 100%;
     }
 }
