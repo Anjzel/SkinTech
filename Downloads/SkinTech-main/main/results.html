@@ -99,9 +99,7 @@
         </div>
 
         <div class="footer">
-            <form action="{{ url_for('download_pdf') }}" method="GET">
-                <button type="submit" class="save-report-btn">Save as PDF</button>
-            </form>
+            <button onclick="downloadPDF()" class="save-report-btn">Save as PDF</button>
             <a href="{{ url_for('index') }}" class="back-home">Back to Home</a>
         </div>
     </div>
@@ -120,6 +118,13 @@
                 moreText.style.display = "none";
                 dots.style.display = "inline";
                 element.textContent = " Read More";
+            }
+        }
+
+        function downloadPDF() {
+            const filename = prompt("Enter your name:", "");
+            if (filename !== null && filename.trim() !== "") {
+                window.location.href = "{{ url_for('download_pdf') }}?filename=" + encodeURIComponent(filename.trim());
             }
         }
     </script>

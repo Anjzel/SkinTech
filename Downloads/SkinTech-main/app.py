@@ -451,6 +451,18 @@ def download_pdf():
         flash("No recommendations available to download.", "warning")
         return redirect(url_for('index'))
 
+    # Get the filename from the request
+    custom_filename = request.args.get('filename', '').strip()
+    if not custom_filename:
+        custom_filename = "Untitled"
+    
+    # Clean the filename to remove invalid characters
+    # Replace invalid characters with underscores
+    custom_filename = re.sub(r'[<>:"/\\|?*]', '_', custom_filename)
+    
+    # Create the full filename
+    full_filename = f"{custom_filename}_Facial_Skincare_Report.pdf"
+
     # Set up PDF with proper margins
     pdf_buffer = BytesIO()
     width, height = letter
@@ -653,7 +665,7 @@ def download_pdf():
     pdf_buffer.seek(0)
     
     response = Response(pdf_buffer.getvalue(), content_type="application/pdf")
-    response.headers["Content-Disposition"] = "attachment; filename=Facial_Skincare_Report.pdf"
+    response.headers["Content-Disposition"] = f"attachment; filename={full_filename}"
     
     return response
 
