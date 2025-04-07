@@ -468,7 +468,8 @@ def download_pdf():
     width, height = letter
     margin = 50  # Increased margin for better spacing
     pdf = canvas.Canvas(pdf_buffer, pagesize=letter)
-    pdf.setTitle("Facial Skincare Report")
+    pdf.setTitle(f"{custom_filename}'s Skincare Report")
+
     
     # Count how many pages we'll need (rough estimate)
     total_pages = 1 + len(recommendations) // 3  # Approximately 3 products per page
@@ -492,9 +493,12 @@ def download_pdf():
     
     # Title with improved styling
     pdf.setFillColorRGB(0.2, 0.2, 0.4)  # Dark blue for title
-    pdf.setFont("Helvetica-Bold", 22)
-    title_width = pdf.stringWidth("Facial Skincare Report", "Helvetica-Bold", 22)
-    pdf.drawString((width - title_width) / 2, height - 60, "Facial Skincare Report")
+    pdf.setFont("Helvetica-Bold", 28)  # or try 32
+    title_text = f"{custom_filename}'s Skincare Report"
+    title_width = pdf.stringWidth(title_text, "Helvetica-Bold", 28)
+    pdf.drawString((width - title_width) / 2, height - 60, title_text)
+
+
     
     # Add a small decorative line under title
     pdf.setStrokeColorRGB(0.5, 0.5, 0.7)
