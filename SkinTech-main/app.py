@@ -47,7 +47,7 @@ try:
 except Exception as e:
     raise RuntimeError(f"Failed to load face cascade classifier: {e}")
 
-CLOUD_CSV_URL = "https://drive.google.com/uc?id=1tJI2lddo9HhDxJ-dPDCdl-X2yKKvG0s4&export=download"
+CLOUD_CSV_URL = "https://drive.google.com/uc?export=download&id=1zHeYAs6RvPFZAW5C1LvFmCYbcz9dUL_w"
 
 
 def load_recommendations():
@@ -66,12 +66,40 @@ except RuntimeError as e:
 
 # Expanded ingredient dictionary
 skin_type_ingredients = {
-    "Oily": ["salicylic acid", "niacinamide", "retinol", "benzoyl peroxide", "tea tree oil"],
-    "Dry": ["hyaluronic acid", "glycerin", "shea butter", "ceramides", "jojoba oil"],
-    "Normal": ["vitamin C", "peptides", "aloe vera", "green tea extract", "squalane"],
-    "Combination": ["glycolic acid", "lactic acid", "vitamin B5", "rosehip oil", "witch hazel"],
-    "Sensitive": ["chamomile", "allantoin", "centella asiatica", "colloidal oatmeal", "panthenol"],
-    "Non-Sensitive": ["retinol", "glycolic acid", "benzoyl peroxide", "salicylic acid", "fragrance"]
+    "Oily": [
+        "salicylic acid", "niacinamide", "zinc gluconate", "kaolin", "monolaurin", 
+        "benzoyl peroxide", "tea tree oil", "witch hazel", "retinol", 
+        "glycolic acid", "surfactants", "glycerin", "thermal spring water"
+    ],
+    "Dry": [
+        "hyaluronic acid", "glycerin", "shea butter", "ceramides", "jojoba oil", 
+        "urea", "sunflower oil", "omega fatty acids", "rhealba oat extract", 
+        "thermal spring water", "avocado oil", "vitamin e", "paraffin", 
+        "argan oil", "filaxerine", "zinc oxide", "copper sulfate", "aloe vera"
+    ],
+    "Normal": [
+        "vitamin c", "peptides", "aloe vera", "green tea extract", 
+        "squalane", "thermal spring water", "hyaluronic acid", "glycerin", 
+        "vitamin e", "rhealba oat extract", "retinaldehyde", "micelles", 
+        "zinc oxide", "copper sulfate", "red fruit extract", "vitamin b5"
+    ],
+    "Combination": [
+        "glycolic acid", "lactic acid", "vitamin b5", "rosehip oil", 
+        "witch hazel", "retinaldehyde", "thermal spring water", "glycerin", 
+        "avocado oil", "titanium dioxide", "silica", "hyaluronic acid"
+    ],
+    "Sensitive": [
+        "chamomile", "allantoin", "centella asiatica", "colloidal oatmeal", 
+        "panthenol", "avocado oil", "thermal spring water", "aloe vera", 
+        "glycerin", "rhealba oat extract", "zinc oxide", "copper sulfate", 
+        "vitamin e", "licorice extract", "dextran sulfate", "imodium"
+    ],
+    "Non-Sensitive": [
+        "retinol", "glycolic acid", "benzoyl peroxide", "salicylic acid", 
+        "fragrance", "lactic acid", "rosehip oil", "jojoba oil", "ceramides", 
+        "urea", "niacinamide", "kaolin", "witch hazel", "silicone", 
+        "beeswax", "mineral oil"
+    ]
 }
 
 
@@ -398,6 +426,11 @@ def get_recommendations(skin_type, preferences):
         # If no preferences selected, just pick top 5 products overall
         sorted_df = filtered_df.sort_values('ingredient_match_count', ascending=False)
         final_recommendations = sorted_df.head(min(5, len(sorted_df))).to_dict(orient='records')
+
+    # Clean up and convert benefits string to list for each recommendation
+    for product in final_recommendations:
+        if isinstance(product.get('benefits'), str):
+            product['benefits'] = [b.strip() for b in product['benefits'].split(',') if b.strip()]
     
     return final_recommendations
 

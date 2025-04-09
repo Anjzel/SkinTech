@@ -15,12 +15,16 @@
             font-size: 0.9em;
             color: #1976d2;
         }
-        .ingredients-section {
+        .ingredients-section, .benefits-section {
             margin-top: 10px;
         }
         .no-match {
             font-style: italic;
             color: #757575;
+        }
+        .benefits-section ul {
+            margin: 5px 0;
+            padding-left: 20px;
         }
     </style>
 </head>
@@ -70,8 +74,15 @@
                 <div class="product-card">
                     <h3>{{ product.name }}</h3>
                     <p class="prodtype"><strong>Category:</strong> {{ product.prodtypes }}</p>
+
+                    {% if product.benefits %}
+                    <div class="benefits-section">
+                        <p><strong>Benefits:</strong> {{ product.benefits | join(', ') }}</p>
+                    </div>
+                    {% endif %}
+
                     
-                    <!-- New ingredients section -->
+
                     <div class="ingredients-section">
                         <p><strong>Key ingredients:</strong></p>
                         {% set found_ingredients = [] %}
