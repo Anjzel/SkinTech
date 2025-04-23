@@ -149,14 +149,15 @@ nav {
     margin-bottom: 15px;
     text-align: center;
 }
-
 .step p {
     font-size: 1.1rem;
     line-height: 1.8;
-    margin-bottom: 20px;
+    margin: 0 auto 20px auto;
     text-align: center;
+    display: block;
+    width: 100%;
+    max-width: 800px;
 }
-
 /* Images Responsive */
 .uploadfirst, .uploadsecond,
 .capturefirst, .capturesecond, .capturethird,
@@ -196,9 +197,6 @@ nav {
         font-size: 2rem;
     }
 
-    .step p {
-        font-size: 1rem;
-    }
 
     .hero {
         padding: 40px 15px;

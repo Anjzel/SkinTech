@@ -433,7 +433,6 @@ captureButton.addEventListener('click', async function () {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(async function (stream) {
-                // Rest of your camera code...
                 // Create container for the face detection interface
                 const container = document.createElement('div');
                 container.style.position = 'fixed';
@@ -448,7 +447,51 @@ captureButton.addEventListener('click', async function () {
                 container.style.alignItems = 'center';
                 container.style.justifyContent = 'center';
                 document.body.appendChild(container);
-                
+
+                // Create close button with improved styling
+                const closeBtn = document.createElement('button');
+                closeBtn.innerHTML = '&times;'; // Using HTML entity for ×
+                closeBtn.style.position = 'fixed'; // Changed to fixed positioning
+                closeBtn.style.top = '120px';
+                closeBtn.style.right = '20px';
+                closeBtn.style.zIndex = '9999'; // Higher than container
+                closeBtn.style.width = '40px';
+                closeBtn.style.height = '40px';
+                closeBtn.style.backgroundColor = 'white';
+                closeBtn.style.color = 'black';
+                closeBtn.style.border = 'none';
+                closeBtn.style.borderRadius = '50%';
+                closeBtn.style.cursor = 'pointer';
+                closeBtn.style.fontSize = '24px';
+                closeBtn.style.fontWeight = 'bold';
+                closeBtn.style.display = 'flex';
+                closeBtn.style.alignItems = 'center';
+                closeBtn.style.justifyContent = 'center';
+                closeBtn.style.padding = '0';
+                closeBtn.style.lineHeight = '1';
+                closeBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+
+                  // Add to document body to ensure it's above everything
+                document.body.appendChild(closeBtn);
+
+                // Add hover effects
+                closeBtn.onmouseover = function() {
+                    this.style.backgroundColor = '#f0f0f0';
+                    this.style.transform = 'scale(1.1)';
+                    this.style.transition = 'all 0.2s ease';
+                };
+                closeBtn.onmouseout = function() {
+                    this.style.backgroundColor = '#ffffff';
+                    this.style.transform = 'scale(1)';
+                };
+
+                closeBtn.addEventListener('click', function() {
+                    // Stop the camera stream and clean up
+                    stream.getTracks().forEach(track => track.stop());
+                    container.remove();
+                    closeBtn.remove();
+                });
+
                 // Create video element
                 const video = document.createElement('video');
                 video.setAttribute('autoplay', '');
@@ -477,7 +520,7 @@ captureButton.addEventListener('click', async function () {
                 
                 // Create capture button
                 const captureBtn = document.createElement('button');
-                captureBtn.innerText = 'Capture Face (0/3)';
+                captureBtn.innerText = 'Capture Front Face (0/3)';
                 captureBtn.style.marginTop = '20px';
                 captureBtn.style.padding = '10px 20px';
                 captureBtn.style.backgroundColor = '#6a5acd';
@@ -487,29 +530,14 @@ captureButton.addEventListener('click', async function () {
                 captureBtn.style.cursor = 'pointer';
                 container.appendChild(captureBtn);
                 
-                // Create close button
-                const closeBtn = document.createElement('button');
-                closeBtn.innerText = 'Close Camera';
-                closeBtn.style.position = 'absolute';
-                closeBtn.style.top = '10px';
-                closeBtn.style.right = '10px';
-                closeBtn.style.padding = '5px 10px';
-                closeBtn.style.backgroundColor = '#ff4d4d';
-                closeBtn.style.color = 'white';
-                closeBtn.style.border = 'none';
-                closeBtn.style.borderRadius = '5px';
-                closeBtn.style.cursor = 'pointer';
-                closeBtn.style.zIndex = '1000';
-                container.appendChild(closeBtn);
-                
-                closeBtn.addEventListener('click', function() {
-                    // Stop the camera stream and clean up
-                    stream.getTracks().forEach(track => track.stop());
-                    container.remove();
-                });
-                
                 let capturedImages = [];
                 let detectionInterval;
+
+                const captureMessages = [
+                    'Capture Front Face',
+                    'Capture Left Face',
+                    'Capture Right Face'
+                ];
                 
                 // Start face detection once video is playing
                 video.addEventListener('play', function() {
@@ -560,6 +588,9 @@ captureButton.addEventListener('click', async function () {
                         return;
                     }
                     
+                    // Update button text with current capture message
+                    captureBtn.innerText = `${captureMessages[capturedImages.length]} (${capturedImages.length + 1}/3)`;
+
                     // Detect faces
                     const detections = await faceapi.detectAllFaces(
                         video,
@@ -614,7 +645,7 @@ captureButton.addEventListener('click', async function () {
                     thumbnail.style.backgroundPosition = 'center';
                     thumbnailsContainer.appendChild(thumbnail);
                     
-                    captureBtn.innerText = `Capture Face (${capturedImages.length}/3)`;
+                    captureBtn.innerText = `${captureMessages[capturedImages.length]} (${capturedImages.length}/3)`;
                     
                     if (capturedImages.length === 3) {
                         captureBtn.innerText = 'Submit Images';
@@ -670,7 +701,7 @@ fileInput.addEventListener('change', function(event) {
     if (file) {
         // Optional: Add validation for file type and size
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-        const maxSize = 5 * 1024 * 1024; // 5MB
+        const maxSize = 15 * 1024 * 1024; // 15MB
 
         if (!allowedTypes.includes(file.type)) {
             alert('Please upload a valid image (JPEG, PNG, JPG)');
@@ -716,3 +747,5 @@ doneButton.addEventListener('click', () => {
 window.addEventListener('load', () => {
     opencvIsReady();
 });
+
+

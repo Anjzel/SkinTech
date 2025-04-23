@@ -274,3 +274,45 @@ h3:after {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
+
+.key-ingredient {
+            display: inline-block;
+            background-color: #e3f2fd;
+            border-radius: 12px;
+            padding: 3px 10px;
+            margin: 2px;
+            font-size: 0.9em;
+            color: #1976d2;
+        }
+        .ingredients-section, .benefits-section {
+            margin-top: 5px;  /* Reduced margin */
+        }
+        .no-match {
+            font-style: italic;
+            color: #757575;
+        }
+        .benefits-section ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+
+        .key-ingredient {
+            display: inline-block;
+            background-color: #e3f2fd;
+            border-radius: 12px;
+            padding: 3px 10px;
+            margin: 2px;
+            font-size: 0.9em;
+            color: #1976d2;
+        }
+        .ingredients-section, .benefits-section {
+            margin-top: 10px;
+        }
+        .no-match {
+            font-style: italic;
+            color: #757575;
+        }
+        .benefits-section ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }

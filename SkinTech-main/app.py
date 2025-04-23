@@ -34,7 +34,7 @@ app = Flask(__name__, template_folder='main')
 app.secret_key = os.urandom(24)
 
 MODEL_PATH = "models/(4)efficientnet_final_trained.keras"
-SENSITIVEMODEL = "models/efficientnet_model.keras"
+SENSITIVEMODEL = "models/fine_tuned_efficientnet_model.keras"
 try:
     model = load_model(MODEL_PATH, custom_objects={'loss': custom_loss})
     sensitive_model = load_model(SENSITIVEMODEL, custom_objects={'loss': custom_loss})  # Load the sensitivity model
@@ -47,24 +47,30 @@ try:
 except Exception as e:
     raise RuntimeError(f"Failed to load face cascade classifier: {e}")
 
-CLOUD_CSV_URL = "https://drive.google.com/uc?export=download&id=1zHeYAs6RvPFZAW5C1LvFmCYbcz9dUL_w"
+CLOUD_CSV_URL = "models/SkinTech_Products.csv"
 
+# Define recommendations_df as a global variable
+recommendations_df = None
 
 def load_recommendations():
+    """Load product recommendations from CSV file"""
     try:
-        response = requests.get(CLOUD_CSV_URL)
-        response.raise_for_status()
-        recommendations_df = pd.read_csv(io.StringIO(response.text))
+        # Read from local file instead of URL
+        recommendations_df = pd.read_csv(CLOUD_CSV_URL)
         return recommendations_df
     except Exception as e:
-        raise RuntimeError(f"Failed to load recommendations from cloud CSV: {e}")
+        print(f"Error loading recommendations: {e}")
+        return None
 
+# Initialize recommendations_df at startup
 try:
     recommendations_df = load_recommendations()
-except RuntimeError as e:
-    print(e)
+    if recommendations_df is None:
+        print("Warning: Failed to load recommendations CSV")
+except Exception as e:
+    print(f"Error initializing recommendations: {e}")
+    recommendations_df = None
 
-# Expanded ingredient dictionary
 skin_type_ingredients = {
     "Oily": [
         "salicylic acid", "niacinamide", "zinc gluconate", "kaolin", "monolaurin", 
@@ -102,6 +108,17 @@ skin_type_ingredients = {
     ]
 }
 
+
+
+def get_product_ingredients(product_name):
+    """Retrieve all ingredients for a specific product"""
+    product_row = recommendations_df[recommendations_df['name'] == product_name]
+    if not product_row.empty:
+        # Extract the ingredients string from the first matching row
+        ingredients_str = product_row['ingredients'].iloc[0]
+        # Split by commas and clean up whitespace
+        return [ing.strip() for ing in ingredients_str.split(',')]
+    return []
 
 
 IMAGE_SIZE = (260, 260)
@@ -228,7 +245,6 @@ def help_page():
 @app.route('/tutorial')
 def tutorial():
     return render_template('tutorial.html')
-
 
 
 def get_gemini_analysis(skin_type):
@@ -645,7 +661,7 @@ def download_pdf():
     pdf.setFillColorRGB(0, 0, 0)
 
     for i, product in enumerate(recommendations):
-        if y_position < margin + 100:  # More space for product entries
+        if y_position < margin + 120:  # Increased margin for benefits
             add_footer(current_page)
             pdf.showPage()
             current_page += 1
@@ -653,46 +669,57 @@ def download_pdf():
             pdf.setFillColorRGB(0, 0, 0)
             y_position = height - margin
         
-        # Product box background
-        pdf.setFillColorRGB(0.97, 0.97, 1.0)  # Very light purple
-        pdf.rect(left_margin, y_position - 50, content_width, 60, fill=1, stroke=0)
-        
-        # Product border
-        pdf.setStrokeColorRGB(0.7, 0.7, 0.8)
-        pdf.setLineWidth(1)
-        pdf.rect(left_margin, y_position - 50, content_width, 60, fill=0, stroke=1)
         
         # Product number circle
-        pdf.setFillColorRGB(0.3, 0.3, 0.6)  # Purple for number
+        pdf.setFillColorRGB(0.3, 0.3, 0.6)
         pdf.circle(left_margin + 15, y_position - 15, 10, fill=1, stroke=0)
         
         # Number inside circle
-        pdf.setFillColorRGB(1, 1, 1)  # White text
+        pdf.setFillColorRGB(1, 1, 1)
         pdf.setFont("Helvetica-Bold", 10)
         number_width = pdf.stringWidth(str(i+1), "Helvetica-Bold", 10)
         pdf.drawString(left_margin + 15 - (number_width/2), y_position - 18, str(i+1))
         
         # Product name and type
-        pdf.setFillColorRGB(0.2, 0.2, 0.4)  # Dark blue
+        pdf.setFillColorRGB(0.2, 0.2, 0.4)
         pdf.setFont("Helvetica-Bold", 12)
         product_text = f"{product['name']} - {product.get('prodtypes', 'N/A')}"
-        
-        # Draw product name with proper indentation
         pdf.drawString(left_margin + 35, y_position - 15, product_text)
         y_position -= line_spacing + 10
         
+        # Product benefits
+        if 'benefits' in product and product['benefits']:
+            pdf.setFillColorRGB(0.2, 0.4, 0.2)  # Dark green for benefits
+            pdf.setFont("Helvetica-Bold", 10)
+            pdf.drawString(left_margin + 35, y_position - 5, "Benefits:")
+            
+            pdf.setFillColorRGB(0, 0, 0)  # Black for benefit text
+            pdf.setFont("Helvetica", 10)
+            
+            benefits_text = ", ".join(product['benefits']) if isinstance(product['benefits'], list) else str(product['benefits'])
+            wrapped_benefits = simpleSplit(benefits_text, "Helvetica", 10, content_width - 40)
+            
+            for line in wrapped_benefits:
+                y_position -= line_spacing - 5
+                pdf.drawString(left_margin + 35, y_position - 5, line)
+        
         # Product ingredients
         if 'ingredients' in product and product['ingredients']:
-            pdf.setFillColorRGB(0, 0, 0)  # Black for ingredients
+            y_position -= line_spacing
+            pdf.setFillColorRGB(0.4, 0.2, 0.2)  
+            pdf.setFont("Helvetica-Bold", 10)
+            pdf.drawString(left_margin + 35, y_position - 5, "Ingredients:")
+            
+            pdf.setFillColorRGB(0, 0, 0)
             pdf.setFont("Helvetica", 10)
-            ingredients_text = f"Ingredients: {product['ingredients']}"
+            ingredients_text = str(product['ingredients'])
             wrapped_ingredients = simpleSplit(ingredients_text, "Helvetica", 10, content_width - 40)
 
             for line in wrapped_ingredients:
-                pdf.drawString(left_margin + 35, y_position - 5, line)
                 y_position -= line_spacing - 5
+                pdf.drawString(left_margin + 35, y_position - 5, line)
         
-        y_position -= line_spacing + 10  # Extra space after each product
+        y_position -= line_spacing + 15 
 
     # Add footer to the last page
     add_footer(current_page)
