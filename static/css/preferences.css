@@ -1,0 +1,71 @@
+/* RESET STYLES */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Main Container for Preferences */
+.preferences-box {
+    background-color: #e0e0e0;
+    border-radius: 20px;
+    padding: 40px 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    text-align: center;
+}
+
+/* Header for Preferences */
+.preferences-box h2 {
+    font-size: 20px;
+    margin-bottom: 30px;
+    color: #000;
+}
+
+/* Preferences Checkbox Items */
+.preference-item {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+    justify-content: left;
+}
+
+.preference-item input[type="checkbox"] {
+    margin-right: 10px;
+    width: 20px;
+    height: 20px;
+    accent-color: #4a4ae5;
+}
+
+.preference-item label {
+    font-size: 16px;
+    color: #000;
+}
+
+/* Button Design */
+.btn {
+    background-color: #b3a9f4;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 15px;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover {
+    background-color: #9f90f0;
+    transform: translateY(-2px);
+}

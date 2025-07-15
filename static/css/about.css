@@ -1,0 +1,209 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+    margin: 0;
+    padding: 0;
+    color: #333;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column; /* Changed to column layout */
+    align-items: center;
+    justify-content: flex-start; /* Align items to the start (top) */
+    overflow-x: hidden; /* Prevent horizontal scrollbar */
+    position: relative; /* Needed for absolute positioning of footer */
+}
+
+h1 {
+    color: #2c3e50;
+    font-size: 3.5rem; /* Increased font size */
+    margin-bottom: 30px; /* Increased margin */
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 20px; /* Increased padding */
+    text-align: center; /* Center heading */
+}
+
+h1:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px; /* Increased width of underline */
+    height: 6px; /* Increased height of underline */
+    background: linear-gradient(to right, #6a5acd, #8a6eff);
+    border-radius: 3px; /* Increased border-radius */
+}
+
+p {
+    color: #5d6d7e;
+    font-size: 1.2rem; /* Increased font size */
+    margin-bottom: 40px; /* Increased margin */
+    max-width: 700px; /* Increased max-width */
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center; /* Center paragraph */
+    line-height: 1.7; /* Improved line height for readability */
+}
+
+h2 {
+    color: #2c3e50;
+    font-size: 2.5rem; /* Increased font size */
+    margin-top: 60px; /* Increased margin */
+    margin-bottom: 30px;
+    font-weight: 600;
+    text-align: center; /* Center heading */
+    position: relative; /* For pseudo-element underline */
+    padding-bottom: 15px; /* Space for underline */
+}
+
+h2:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px; /* Width of underline */
+    height: 4px; /* Height of underline */
+    background-color: #8e44ad; /* A different underline color */
+    border-radius: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 2.8rem; /* Adjusted font size */
+        margin-bottom: 25px;
+    }
+
+    h1:after {
+        width: 100px;
+        height: 4px;
+    }
+
+    p {
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+
+    
+    h2 {
+        font-size: 2rem; /* Adjusted font size */
+        margin-top: 50px;
+        margin-bottom: 25px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+
+    .hero-section p {
+        font-size: 1rem;
+    }
+    
+
+
+}
+
+.site-header {
+background: white;
+padding: 15px 50px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+width: 100%;
+position: sticky;
+top: 0;
+left: 0;
+z-index: 1000;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Stretch header container */
+.header-container {
+width: 100%;
+max-width: 1400px; /* Adjust for responsiveness */
+margin: 0 auto;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+/* Logo styling */
+.logo {
+height: 60px; /* Adjust as needed */
+}
+
+/* Navigation */
+nav {
+display: flex;
+gap: 30px; /* Space between About and Help */
+}
+
+.nav-link {
+font-size: 1.2rem;
+font-weight: 600;
+color: #6a5acd;
+text-decoration: none;
+transition: font-size 0.3s ease, font-weight 0.3s ease; /* Added transition */
+}
+
+.nav-link:hover {
+color: #483d8b;
+text-decoration: underline; /* Added underline on hover */
+font-size: 1.3rem; /* Increased font size on hover */
+font-weight: 700; /* Made font bolder on hover */
+}
+
+
+
+/* Mobile Responsiveness for Header*/
+@media screen and (max-width: 768px) {
+.container {
+width: 95%;
+padding: 20px;
+margin: 20px auto;
+}
+
+h1 {
+font-size: 2rem;
+margin-bottom: 20px;
+}
+
+.hero-section {
+height: auto;
+padding: 40px 20px;
+}
+
+.hero-section h1 {
+font-size: 2.5rem;
+}
+
+.header-container {
+flex-direction: column;
+gap: 10px;
+}
+
+nav {
+gap: 20px;
+}
+
+.loading-overlay p {
+font-size: 1rem;
+}
+}
+
+
+

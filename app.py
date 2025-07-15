@@ -1,0 +1,894 @@
+from flask import Flask, render_template, request, redirect, url_for, flash, session, Response, send_from_directory
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+import numpy as np
+from PIL import Image
+import os
+import base64
+import re
+from io import BytesIO
+import pandas as pd
+import random
+import requests
+import io
+import cv2
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.utils import simpleSplit
+from reportlab.pdfgen import canvas
+
+import google.generativeai as genai
+
+# 🔑 Replace this with your Google API key
+GENAI_API_KEY = "AIzaSyCH6StzM1z1eKNjthj24JagDpvx7CgiRE4"  
+
+genai.configure(api_key=GENAI_API_KEY)
+
+
+# Register custom objects (if any)
+@tf.keras.utils.register_keras_serializable()
+def custom_loss(y_true, y_pred):
+    return tf.reduce_mean(tf.square(y_true - y_pred))
+
+app = Flask(__name__, template_folder='main')
+app.secret_key = os.urandom(24)
+
+MODEL_PATH = "models/(4)efficientnet_final_trained.keras"
+SENSITIVEMODEL = "models/fine_tuned_efficientnet_model.keras"
+try:
+    model = load_model(MODEL_PATH, custom_objects={'loss': custom_loss})
+    sensitive_model = load_model(SENSITIVEMODEL, custom_objects={'loss': custom_loss})  # Load the sensitivity model
+except Exception as e:
+    raise RuntimeError(f"Failed to load models: {e}")
+
+# Load the face detection cascade classifier
+try:
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+except Exception as e:
+    raise RuntimeError(f"Failed to load face cascade classifier: {e}")
+
+CLOUD_CSV_URL = "models/SkinTech_Products.csv"
+
+# Define recommendations_df as a global variable
+recommendations_df = None
+
+def load_recommendations():
+    """Load product recommendations from CSV file"""
+    try:
+        # Read from local file instead of URL
+        recommendations_df = pd.read_csv(CLOUD_CSV_URL)
+        return recommendations_df
+    except Exception as e:
+        print(f"Error loading recommendations: {e}")
+        return None
+
+# Initialize recommendations_df at startup
+try:
+    recommendations_df = load_recommendations()
+    if recommendations_df is None:
+        print("Warning: Failed to load recommendations CSV")
+except Exception as e:
+    print(f"Error initializing recommendations: {e}")
+    recommendations_df = None
+
+skin_type_ingredients = {
+    "Oily": [
+        "salicylic acid", "niacinamide", "zinc gluconate", "kaolin", "monolaurin", 
+        "benzoyl peroxide", "tea tree oil", "witch hazel", "retinol", 
+        "glycolic acid", "surfactants", "glycerin", "thermal spring water"
+    ],
+    "Dry": [
+        "hyaluronic acid", "glycerin", "shea butter", "ceramides", "jojoba oil", 
+        "urea", "sunflower oil", "omega fatty acids", "rhealba oat extract", 
+        "thermal spring water", "avocado oil", "vitamin e", "paraffin", 
+        "argan oil", "filaxerine", "zinc oxide", "copper sulfate", "aloe vera"
+    ],
+    "Normal": [
+        "vitamin c", "peptides", "aloe vera", "green tea extract", 
+        "squalane", "thermal spring water", "hyaluronic acid", "glycerin", 
+        "vitamin e", "rhealba oat extract", "retinaldehyde", "micelles", 
+        "zinc oxide", "copper sulfate", "red fruit extract", "vitamin b5"
+    ],
+    "Combination": [
+        "glycolic acid", "lactic acid", "vitamin b5", "rosehip oil", 
+        "witch hazel", "retinaldehyde", "thermal spring water", "glycerin", 
+        "avocado oil", "titanium dioxide", "silica", "hyaluronic acid"
+    ],
+    "Sensitive": [
+        "chamomile", "allantoin", "centella asiatica", "colloidal oatmeal", 
+        "panthenol", "avocado oil", "thermal spring water", "aloe vera", 
+        "glycerin", "rhealba oat extract", "zinc oxide", "copper sulfate", 
+        "vitamin e", "licorice extract", "dextran sulfate", "imodium"
+    ],
+    "Non-Sensitive": [
+        "retinol", "glycolic acid", "benzoyl peroxide", "salicylic acid", 
+        "fragrance", "lactic acid", "rosehip oil", "jojoba oil", "ceramides", 
+        "urea", "niacinamide", "kaolin", "witch hazel", "silicone", 
+        "beeswax", "mineral oil"
+    ]
+}
+
+
+
+def get_product_ingredients(product_name):
+    """Retrieve all ingredients for a specific product"""
+    product_row = recommendations_df[recommendations_df['name'] == product_name]
+    if not product_row.empty:
+        # Extract the ingredients string from the first matching row
+        ingredients_str = product_row['ingredients'].iloc[0]
+        # Split by commas and clean up whitespace
+        return [ing.strip() for ing in ingredients_str.split(',')]
+    return []
+
+
+IMAGE_SIZE = (260, 260)
+
+skin_types = ["dry", "oily", "combination", "normal"]
+sensitivity_types = ["sensitive", "non-sensitive"]
+
+
+def detect_and_crop_face(image):
+    """Detect face in image and crop it before resizing"""
+    # Convert PIL image to numpy array
+    img_array = np.array(image)
+
+    # Convert RGB to BGR (OpenCV uses BGR format)
+    img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+
+    # Convert to grayscale for face detection
+    gray = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
+
+    # Detect faces using the Haar Cascade classifier
+    faces = face_cascade.detectMultiScale(
+        gray,
+        scaleFactor=1.1,  # Adjust scaleFactor for better detection
+        minNeighbors=5,  # Increase minNeighbors to reduce false positives
+        minSize=(30, 30)  # Minimum face size to detect
+    )
+
+    # If no faces are detected, return the resized original image
+    if len(faces) == 0:
+        print("No face detected, resizing full image.")
+        return image.resize(IMAGE_SIZE)
+
+    # Get the largest face detected (based on area)
+    x, y, w, h = max(faces, key=lambda rect: rect[2] * rect[3])
+
+    # Ensure the bounding box is within the image dimensions
+    x1, y1, x2, y2 = max(0, x), max(0, y), min(img_array.shape[1], x + w), min(img_array.shape[0], y + h)
+
+    # Crop the face region from the image
+    face_img = img_array[y1:y2, x1:x2]
+
+    # Convert the cropped face back to a PIL image
+    face_pil = Image.fromarray(cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB))
+
+    # Resize the cropped face to the required size for the model
+    return face_pil.resize(IMAGE_SIZE)
+
+def detect_face_upload(image):
+    """Detect face in image and crop it before resizing."""
+    # Convert PIL image to numpy array
+    img_array = np.array(image)
+
+    # Convert RGB to BGR for OpenCV
+    img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+
+    # Convert to grayscale for face detection
+    gray = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
+
+    # Detect faces using the Haar Cascade classifier
+    faces = face_cascade.detectMultiScale(
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(30, 30)
+    )
+
+    # ✅ Return None if no faces are detected
+    if len(faces) == 0:
+        print("No face detected.")  # For debugging
+        return None
+
+    # Get the largest face detected
+    x, y, w, h = max(faces, key=lambda rect: rect[2] * rect[3])
+
+    # Crop the face region
+    face_img = img_array[y:y + h, x:x + w]
+
+    # Convert the cropped face back to PIL format
+    face_pil = Image.fromarray(cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB))
+
+    # Resize the face to the model's required input size
+    return face_pil.resize(IMAGE_SIZE)
+
+
+
+def preprocess_image(image):
+    """Preprocess image for model prediction"""
+    # Detect and crop face
+    face_image = detect_and_crop_face(image)
+
+    # Convert to numpy array and normalize
+    image_array = np.array(face_image) / 255.0
+    image_array = np.expand_dims(image_array, axis=0)
+    return image_array
+
+
+def interpret_prediction(prediction):
+    predicted_class_index = np.argmax(prediction, axis=1)[0] if prediction.ndim > 1 else prediction
+    return skin_types[predicted_class_index]
+
+
+def majority_vote(predictions):
+    vote_counts = {skin_type: 0 for skin_type in skin_types}
+    for pred in predictions:
+        vote_counts[pred] += 1
+    sorted_votes = sorted(vote_counts.items(), key=lambda x: x[1], reverse=True)
+    if sorted_votes[0][1] > 1:  # If there is a majority
+        return sorted_votes[0][0]
+    return predictions[1]  # Default to center image prediction
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/help')
+def help_page():
+    return render_template('help.html')
+
+@app.route('/tutorial')
+def tutorial():
+    return render_template('tutorial.html')
+
+
+def get_gemini_analysis(skin_type):
+    """Uses Gemini API to analyze the predicted skin type and provide skincare advice."""
+    prompt = (
+        f"The user's skin type is {skin_type}. "
+        f"Provide a concise analysis of {skin_type} skin, including typical characteristics "
+        f"(for example, if dry skin: flakiness, tightness, rough patches). "
+        f"Then provide specific skincare recommendations for {skin_type} skin type. "
+        f"Format your response as plain text without any markdown formatting like asterisks. "
+        f"Focus on practical advice without disclaimers or general recommendations to consult professionals."
+    )
+
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content([prompt])
+
+    # Get the response text
+    text = response.text.strip() if response.text else "⚠️ No analysis received. Try again."
+
+    # Clean up any remaining markdown formatting
+    cleaned_text = text.replace("**", "").replace("*", "")
+
+    return cleaned_text
+
+
+def get_product_routine(skin_type, recommendations):
+    """Uses Gemini API to generate a customized skincare routine with the recommended products."""
+    
+    # Create a list of product names
+    product_names = [prod['name'] for prod in recommendations]
+    
+    prompt = (
+        f"Create a detailed daily skincare routine using these products: {', '.join(product_names)}.\n"
+        f"Format the response as follows:\n"
+        f"AM ROUTINE:\n"
+        f"1. First step (product name) - brief instruction\n"
+        f"2. Second step (product name) - brief instruction\n"
+        f"...\n"
+        f"PM ROUTINE:\n"
+        f"1. First step (product name) - brief instruction\n"
+        f"2. Second step (product name) - brief instruction\n"
+        f"...\n"
+        f"ADDITIONAL TIPS:\n"
+        f"- Wait times between products\n"
+        f"- Frequency of use recommendations\n"
+        f"Keep it practical and easy to follow."
+    )
+
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content([prompt])
+    cleaned_text = response.text.strip().replace('**', '').replace('*', '')
+    return cleaned_text if cleaned_text else "Routine information not available."
+
+
+
+@app.route('/results', methods=['POST'])
+def results():
+    image_data_urls = {
+        'left': request.form.get('image_left'),
+        'center': request.form.get('image_center'),
+        'right': request.form.get('image_right')
+    }
+
+    uploaded_file = request.files.get('image')
+
+    if not uploaded_file and not all(image_data_urls.values()):
+        flash("Please upload an image or capture all three images.")
+        return redirect(url_for('index'))
+
+    predictions = []
+    sensitivity_predictions = []
+    image_path = 'static/images'
+    os.makedirs(image_path, exist_ok=True)
+
+    try:
+        if uploaded_file:
+            filename = 'uploaded_image.png'
+            filepath = os.path.join(image_path, filename)
+            uploaded_file.save(filepath)
+
+            # ✅ Open the uploaded image
+            img = Image.open(filepath)
+                    # 🔥 Face detection
+            detected_face = detect_face_upload(img)
+
+            # ✅ Flash message when no face is detected
+            if detected_face is None:
+                flash("⚠️ No face detected in the uploaded image. Please try again.")
+                return redirect(url_for('index'))
+
+            # 🔥 Face detection for upload
+            cropped_img = detect_face_upload(img)
+
+            if cropped_img.size[0] < 30 or cropped_img.size[1] < 30:  # No face detected
+                flash("❌ Invalid image: No face detected.")
+                return redirect(url_for('index'))
+
+            # Save the cropped image
+            cropped_filepath = os.path.join(image_path, 'cropped_uploaded_image.png')
+            cropped_img.save(cropped_filepath)
+
+            # Preprocess the cropped image
+            processed_img = preprocess_image(cropped_img)
+
+
+            # ✅ Predict skin type
+            prediction = model.predict(processed_img)
+            final_skin_type = interpret_prediction(prediction)
+
+            # ✅ Predict sensitivity & Debugging
+            sensitivity_prediction = sensitive_model.predict(processed_img)
+            print(f"DEBUG: Raw Sensitivity Prediction -> {sensitivity_prediction}")
+
+            is_sensitive = "Sensitive" if sensitivity_prediction > 0.5 else "Non-Sensitive"
+            print(f"DEBUG: Sensitivity Classification -> {is_sensitive}")
+
+            session['skin_type'] = final_skin_type
+            session['sensitivity'] = is_sensitive if is_sensitive else "Not Detected"
+            session['image_filenames'] = {
+                'cropped_uploaded': 'cropped_uploaded_image.png'
+            }
+
+        else:
+            for position, image_data_url in image_data_urls.items():
+                if not image_data_url:
+                    continue
+
+                image_data = re.sub('^data:image/.+;base64,', '', image_data_url)
+                image_data = base64.b64decode(image_data)
+                filename = f'{position}_image.png'
+                filepath = os.path.join(image_path, filename)
+
+                with open(filepath, 'wb') as f:
+                    f.write(image_data)
+
+                img = Image.open(BytesIO(image_data))
+
+                # Keep existing logic for captured images (no face detection)
+                processed_img = preprocess_image(img)
+
+                # ✅ Predict skin type
+                prediction = model.predict(processed_img)
+                predictions.append(interpret_prediction(prediction))
+
+                # ✅ Predict sensitivity & Debugging
+                sensitivity_prediction = sensitive_model.predict(processed_img)
+                print(f"DEBUG: Raw Sensitivity Prediction for {position} -> {sensitivity_prediction}")
+
+                sensitivity_predictions.append(sensitivity_prediction > 0.5)
+
+            if predictions:
+                final_skin_type = majority_vote(predictions)
+                is_sensitive = "Sensitive" if sum(sensitivity_predictions) > 1 else "Non-Sensitive"
+
+                session['skin_type'] = final_skin_type
+                session['sensitivity'] = is_sensitive if is_sensitive else "Not Detected"
+                session['image_filenames'] = {
+                    pos: f'{pos}_image.png' for pos in image_data_urls if image_data_urls[pos]
+                }
+            else:
+                flash("No valid images were processed.")
+                return redirect(url_for('index'))
+
+        # 🔥 NEW: Get Gemini-generated skin analysis
+        skin_analysis = get_gemini_analysis(final_skin_type)
+        session['skin_analysis'] = skin_analysis  # Store the analysis
+
+    except Exception as e:
+        flash(f"An error occurred during prediction: {e}")
+        return redirect(url_for('index'))
+
+    return render_template(
+        'index.html',
+        skin_type=session.get('skin_type', "Unknown"),
+        sensitivity=session.get('sensitivity', "Unknown"),
+        skin_analysis=session.get('skin_analysis', "No analysis available.")
+    )
+
+
+def get_recommendations(skin_type, preferences):
+    if recommendations_df is None or recommendations_df.empty:
+        raise RuntimeError("Recommendations dataset not loaded or is empty.")
+
+    # Normalize column names (lowercase, strip spaces)
+    recommendations_df.columns = recommendations_df.columns.str.lower().str.strip()
+
+    # Get key ingredients for the detected skin type
+    key_ingredients = skin_type_ingredients.get(skin_type.capitalize(), [])
+    
+    # Filter by skin type
+    filtered_df = recommendations_df[
+        recommendations_df['skin_types'].str.lower().str.strip() == skin_type.lower().strip()]
+
+    # If no products match the skin type, return empty list
+    if filtered_df.empty:
+        return []
+    
+    # Create a new column that counts how many key ingredients are in each product
+    filtered_df['ingredient_match_count'] = filtered_df['ingredients'].apply(
+        lambda x: sum(1 for ingredient in key_ingredients if ingredient.lower() in str(x).lower())
+    )
+    
+    # Initialize empty list for final recommendations
+    final_recommendations = []
+    
+    # If user selected preferences, get one product per preference
+    if preferences:
+        for pref in preferences:
+            # Filter products by this specific preference
+            pref_df = filtered_df[filtered_df['prodtypes'].str.lower() == pref.lower()]
+            
+            if not pref_df.empty:
+                # Sort by ingredient match count
+                pref_df = pref_df.sort_values('ingredient_match_count', ascending=False)
+                
+                # Take the top 3 products with highest ingredient matches
+                top_matches = pref_df.head(min(3, len(pref_df)))
+                
+                # Randomly select 1 product from the top matches
+                selected_product = top_matches.sample(1).to_dict(orient='records')[0]
+                
+                # Add this product to our recommendations
+                final_recommendations.append(selected_product)
+    else:
+        # If no preferences selected, just pick top 5 products overall
+        sorted_df = filtered_df.sort_values('ingredient_match_count', ascending=False)
+        final_recommendations = sorted_df.head(min(5, len(sorted_df))).to_dict(orient='records')
+
+    # Clean up and convert benefits string to list for each recommendation
+    for product in final_recommendations:
+        if isinstance(product.get('benefits'), str):
+            product['benefits'] = [b.strip() for b in product['benefits'].split(',') if b.strip()]
+
+        # Ensure image field is passed (optional: add fallback if missing)
+        image = product.get('image')
+        if isinstance(image, str) and image.strip():
+            image = image.strip()
+            if image.startswith("static/"):
+                image = image[len("static/"):]
+            product['image'] = image
+        else:
+            product['image'] = None  # or a default like 'default.jpg'
+
+    
+    return final_recommendations
+
+@app.route('/haarcascade_frontalface_default.xml')
+def serve_cascade():
+    return send_file(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+
+@app.route('/static/<path:path>')
+def serve_static(path):
+    return send_from_directory('static', path)
+
+
+@app.route('/submit_preferences', methods=['POST'])
+def submit_preferences():
+    skin_type = session.get('skin_type')
+    sensitivity = session.get('sensitivity')
+    image_filenames = session.get('image_filenames')
+    skin_analysis = session.get('skin_analysis')
+    preferences = request.form.getlist('preferences')
+
+    if not skin_type:
+        flash("Skin type not found. Please analyze your skin first.")
+        return redirect(url_for('index'))
+
+    # Clear old recommendations to force new ones
+    session.pop('recommendations', None)
+
+    # Get recommendations
+    recommendations = get_recommendations(skin_type, preferences)
+    
+    # Generate routine
+    routine = get_product_routine(skin_type, recommendations)
+    
+    # Store in session
+    session['recommendations'] = recommendations
+    session['routine'] = routine
+
+    return render_template(
+        'results.html',
+        skin_type=skin_type,
+        sensitivity=sensitivity,
+        recommendations=recommendations,
+        image_filenames=image_filenames,
+        skin_analysis=skin_analysis,
+        routine=routine,  # Add this line
+        skin_type_ingredients=skin_type_ingredients
+    )
+
+@app.route('/download_pdf')
+def download_pdf():
+    recommendations = session.get('recommendations', [])
+    skin_analysis = session.get('skin_analysis', "No skin analysis available.")
+    skin_type = session.get('skin_type', "Unknown")
+    sensitivity = session.get('sensitivity', "Unknown")
+    image_filenames = session.get('image_filenames', {})
+
+    custom_filename = request.args.get('filename', '').strip() or "Untitled"
+    custom_filename = re.sub(r'[<>:"/\\|?*]', '_', custom_filename)
+    full_filename = f"{custom_filename}_Facial_Skincare_Report.pdf"
+
+    pdf_buffer = BytesIO()
+    width, height = letter
+    margin = 50
+    pdf = canvas.Canvas(pdf_buffer, pagesize=letter)
+    pdf.setTitle(f"{custom_filename}'s Skincare Report")
+
+    total_pages = 1 + len(recommendations) // 3
+
+    def add_footer(page_num):
+        footer_y = margin - 30
+        pdf.setFont("Helvetica", 8)
+        pdf.setFillColorRGB(0.5, 0.5, 0.5)
+        from datetime import datetime
+        today = datetime.now().strftime("%B %d, %Y")
+        pdf.drawString(margin, footer_y, f"Generated on: {today}")
+        pdf.drawString(width - margin - 100, footer_y, f"Page {page_num} of {total_pages}")
+
+    current_page = 1
+
+    # Header and Title
+    pdf.setFillColorRGB(0.9, 0.9, 0.95)
+    pdf.rect(margin, height - 100, width - (2 * margin), 70, fill=1, stroke=0)
+    pdf.setFillColorRGB(0.2, 0.2, 0.4)
+    pdf.setFont("Helvetica-Bold", 28)
+    title_text = f"{custom_filename}'s Skincare Report"
+    title_width = pdf.stringWidth(title_text, "Helvetica-Bold", 28)
+    pdf.drawString((width - title_width) / 2, height - 60, title_text)
+    pdf.setStrokeColorRGB(0.5, 0.5, 0.7)
+    pdf.setLineWidth(1.5)
+    pdf.line((width - title_width) / 2, height - 65, (width + title_width) / 2, height - 65)
+
+    y_position = height - 120
+    line_spacing = 20
+    content_width = width - (2 * margin)
+    left_margin = margin
+
+    # Skin Analysis Images Section
+    if image_filenames:
+        pdf.setFillColorRGB(0.95, 0.95, 1.0)
+        pdf.rect(left_margin - 5, y_position - 5, content_width + 10, 30, fill=1, stroke=0)
+        pdf.setFillColorRGB(0.2, 0.2, 0.5)
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(left_margin, y_position, "Your Skin Analysis Images:")
+        y_position -= line_spacing + 5
+
+        image_height = 120
+        image_max_width = (content_width - 20) // min(3, len(image_filenames))
+        img_x = left_margin + 10
+        img_y = y_position - image_height
+
+        for img_type, filename in image_filenames.items():
+            try:
+                img_path = os.path.join('static/images', filename)
+                if not os.path.exists(img_path):
+                    continue
+                img = Image.open(img_path)
+                aspect_ratio = img.width / img.height
+                new_height = image_height
+                new_width = min(image_height * aspect_ratio, image_max_width)
+
+                pdf.drawInlineImage(img_path, img_x, img_y, width=new_width, height=new_height)
+
+                caption = "Uploaded Image" if "uploaded" in img_type else f"{img_type.capitalize()} Face Image"
+                pdf.setFont("Helvetica", 8)
+                pdf.setFillColorRGB(0.4, 0.4, 0.4)
+                caption_width = pdf.stringWidth(caption, "Helvetica", 8)
+                pdf.drawString(img_x + (new_width - caption_width) / 2, img_y - 15, caption)
+
+                img_x += image_max_width + 10
+
+            except Exception as e:
+                print(f"Error loading image {filename}: {e}")
+                continue
+
+        y_position = img_y - 30
+        if y_position < margin + 80:
+            add_footer(current_page)
+            pdf.showPage()
+            current_page += 1
+            y_position = height - margin
+
+    # Skin Type and Sensitivity
+    pdf.setFillColorRGB(0.95, 0.95, 1.0)
+    pdf.rect(left_margin - 5, y_position - 5, content_width + 10, 30, fill=1, stroke=0)
+    pdf.setFillColorRGB(0.2, 0.2, 0.5)
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(left_margin, y_position, "Skin Type & Sensitivity:")
+    y_position -= line_spacing + 5
+
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(left_margin + 10, y_position, f"Detected Skin Type: {skin_type}")
+    y_position -= line_spacing
+    pdf.drawString(left_margin + 10, y_position, f"Skin Sensitivity: {sensitivity}")
+    y_position -= line_spacing * 1.5
+
+    # Beneficial Ingredients
+    pdf.setFillColorRGB(0.95, 0.95, 1.0)
+    pdf.rect(left_margin - 5, y_position - 5, content_width + 10, 30, fill=1, stroke=0)
+    pdf.setFillColorRGB(0.2, 0.2, 0.5)
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(left_margin, y_position, "Beneficial Ingredients:")
+    y_position -= line_spacing + 5
+
+    try:
+        beneficial_ingredients = skin_type_ingredients.get(skin_type.capitalize(), [])
+        if sensitivity == "Sensitive":
+            beneficial_ingredients.extend(skin_type_ingredients.get("Sensitive", []))
+        ingredients_text = ", ".join(beneficial_ingredients)
+    except NameError:
+        ingredients_text = "Not available. Please check with your skin care professional."
+
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setFont("Helvetica", 12)
+    for line in simpleSplit(ingredients_text, "Helvetica", 12, content_width - 20):
+        pdf.drawString(left_margin + 10, y_position, line)
+        y_position -= line_spacing
+        if y_position < margin + 50:
+            add_footer(current_page)
+            pdf.showPage()
+            current_page += 1
+            y_position = height - margin
+
+    # Skin Analysis
+    y_position -= 10
+    pdf.setFillColorRGB(0.95, 0.95, 1.0)
+    pdf.rect(left_margin - 5, y_position - 5, content_width + 10, 30, fill=1, stroke=0)
+    pdf.setFillColorRGB(0.2, 0.2, 0.5)
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(left_margin, y_position, "Skin Analysis:")
+    y_position -= line_spacing + 5
+
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setFont("Helvetica", 12)
+    for line in simpleSplit(skin_analysis, "Helvetica", 12, content_width - 20):
+        pdf.drawString(left_margin + 10, y_position, line)
+        y_position -= line_spacing
+        if y_position < margin + 50:
+            add_footer(current_page)
+            pdf.showPage()
+            current_page += 1
+            y_position = height - margin
+
+    # Add Skincare Routine Section with margins
+    y_position -= 15
+    routine_height = 30
+    
+    # Background rectangle with margin
+    pdf.setFillColorRGB(0.95, 0.95, 1.0)
+    pdf.rect(left_margin - 5, y_position - 5, content_width + 10, routine_height, fill=1, stroke=0)
+    
+    # Title with left margin
+    pdf.setFillColorRGB(0.2, 0.2, 0.5)
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(left_margin, y_position, "Your Daily Skincare Routine:")
+    y_position -= line_spacing + 5
+
+    # Generate routine using Gemini
+    routine_text = get_product_routine(skin_type, recommendations)
+    
+    # Add text with proper margins
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setFont("Helvetica", 11)
+    
+    # Increase left margin for routine content
+    routine_left_margin = left_margin + 20
+    reduced_width = content_width - 40  # Reduce width to create right margin
+    
+    for line in simpleSplit(routine_text, "Helvetica", 11, reduced_width):
+        if y_position < margin + 50:
+            add_footer(current_page)
+            pdf.showPage()
+            current_page += 1
+            y_position = height - margin
+        
+        # Draw text with increased left margin
+        pdf.drawString(routine_left_margin, y_position, line)
+        y_position -= line_spacing
+
+    # Add extra spacing after routine section
+    y_position -= line_spacing * 1.5
+
+    # Add a decorative line under the routine section
+    pdf.setStrokeColorRGB(0.8, 0.8, 0.9)
+    pdf.setLineWidth(0.5)
+    pdf.line(left_margin, y_position + 10, left_margin + content_width, y_position + 10)
+
+    # Recommended Products
+    pdf.setFillColorRGB(0.95, 0.95, 1.0)
+    pdf.rect(left_margin - 5, y_position - 5, content_width + 10, 30, fill=1, stroke=0)
+    pdf.setFillColorRGB(0.2, 0.2, 0.5)
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(left_margin, y_position, "Recommended Products:")
+    y_position -= line_spacing * 1.5
+
+    if not recommendations:
+        pdf.setFont("Helvetica-Oblique", 12)
+        pdf.setFillColorRGB(0.5, 0.5, 0.5)
+        pdf.drawString(left_margin + 10, y_position, "No product recommendations available.")
+        y_position -= line_spacing * 1.5
+    else:
+        for i, product in enumerate(recommendations):
+            if y_position < margin + 120:
+                add_footer(current_page)
+                pdf.showPage()
+                current_page += 1
+                y_position = height - margin
+
+            pdf.setFillColorRGB(0.3, 0.3, 0.6)
+            pdf.circle(left_margin + 15, y_position - 15, 10, fill=1, stroke=0)
+            pdf.setFillColorRGB(1, 1, 1)
+            pdf.setFont("Helvetica-Bold", 10)
+            number_width = pdf.stringWidth(str(i+1), "Helvetica-Bold", 10)
+            pdf.drawString(left_margin + 15 - (number_width/2), y_position - 18, str(i+1))
+
+            # Product Image
+            if 'image' in product and product['image']:
+                try:
+                    # Get the relative path from product data
+                    image_path = product['image']
+                    
+                    # Convert to absolute path based on Flask app's root directory
+                    absolute_image_path = os.path.join(app.root_path, 'static', image_path)
+                    
+                    if os.path.exists(absolute_image_path):
+                        img = Image.open(absolute_image_path)
+                        img_width = 80
+                        img_height = 80
+                        aspect = img.width / img.height
+                        if aspect > 1:
+                            img_height = img_width / aspect
+                        else:
+                            img_width = img_height * aspect
+
+                        if y_position - img_height - 10 < margin:
+                            add_footer(current_page)
+                            pdf.showPage()
+                            current_page += 1
+                            y_position = height - margin
+
+                        # Changed: Draw image on left side after the bullet number
+                        pdf.drawInlineImage(absolute_image_path, left_margin + 35, 
+                                        y_position - img_height, width=img_width, height=img_height)
+                        
+                        # Adjust text position to appear after the image
+                        text_start_x = left_margin + 35 + img_width + 10
+                        y_position -= img_height + 10
+                    else:
+                        print(f"Image file not found: {absolute_image_path}")
+                        print(f"Product image path: {image_path}")
+                        text_start_x = left_margin + 35
+
+                except Exception as e:
+                    print(f"Error loading product image: {e}")
+                    text_start_x = left_margin + 35
+
+            # Product name and details - adjusted x position
+            pdf.setFillColorRGB(0.2, 0.2, 0.4)
+            pdf.setFont("Helvetica-Bold", 12)
+            pdf.drawString(text_start_x, y_position - 15, f"{product['name']} - {product.get('prodtypes', 'N/A')}")
+            y_position -= line_spacing + 10
+
+            # Benefits - adjusted x position
+            if 'benefits' in product and product['benefits']:
+                pdf.setFillColorRGB(0.2, 0.4, 0.2)
+                pdf.setFont("Helvetica-Bold", 10)
+                pdf.drawString(text_start_x, y_position - 5, "Benefits:")
+                pdf.setFillColorRGB(0, 0, 0)
+                pdf.setFont("Helvetica", 10)
+                for line in simpleSplit(", ".join(product['benefits']), "Helvetica", 10, content_width - (text_start_x - left_margin)):
+                    y_position -= line_spacing - 5
+                    pdf.drawString(text_start_x, y_position - 5, line)
+
+            # Ingredients
+            if 'ingredients' in product and product['ingredients']:
+                y_position -= line_spacing
+                pdf.setFillColorRGB(0.4, 0.2, 0.2)
+                pdf.setFont("Helvetica-Bold", 10)
+                pdf.drawString(text_start_x, y_position - 5, "Ingredients:")
+                pdf.setFillColorRGB(0, 0, 0)
+                pdf.setFont("Helvetica", 10)
+                for line in simpleSplit(str(product['ingredients']), "Helvetica", 10, content_width - (text_start_x - left_margin)):
+                    y_position -= line_spacing - 5
+                    pdf.drawString(text_start_x, y_position - 5, line)
+
+            # Instructions
+            if 'instruction' in product and product['instruction']:
+                y_position -= line_spacing
+                pdf.setFillColorRGB(0.1, 0.3, 0.5)
+                pdf.setFont("Helvetica-Bold", 10)
+                pdf.drawString(text_start_x, y_position - 5, "How to Use:")
+                pdf.setFillColorRGB(0, 0, 0)
+                pdf.setFont("Helvetica", 10)
+                for line in simpleSplit(str(product['instruction']), "Helvetica", 10, content_width - (text_start_x - left_margin)):
+                    y_position -= line_spacing - 5
+                    pdf.drawString(text_start_x, y_position - 5, line)
+
+            y_position -= line_spacing + 15
+
+    # Disclaimer Section
+    if y_position < margin + 100:
+        add_footer(current_page)
+        pdf.showPage()
+        current_page += 1
+        y_position = height - margin
+
+    pdf.setFillColorRGB(0.95, 0.95, 1.0)
+    pdf.rect(left_margin - 5, y_position - 5, content_width + 10, 30, fill=1, stroke=0)
+    pdf.setFillColorRGB(0.2, 0.2, 0.5)
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(left_margin, y_position, "Disclaimer:")
+    y_position -= line_spacing + 5
+
+    disclaimer_text = (
+        "This skincare report is generated based on the information provided and is intended for informational purposes only. "
+        "The recommendations and analysis are not a substitute for professional medical advice, diagnosis, or treatment. "
+        "Always seek the advice of your dermatologist or other qualified healthcare provider with any questions you may have. "
+        "Individual results may vary. Patch testing is recommended before use."
+    )
+
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setFont("Helvetica", 10)
+    for line in simpleSplit(disclaimer_text, "Helvetica", 10, content_width - 20):
+        pdf.drawString(left_margin + 10, y_position, line)
+        y_position -= line_spacing - 5
+        if y_position < margin + 40:
+            add_footer(current_page)
+            pdf.showPage()
+            current_page += 1
+            y_position = height - margin
+
+    add_footer(current_page)
+    pdf.save()
+    pdf_buffer.seek(0)
+
+    response = Response(pdf_buffer.getvalue(), content_type="application/pdf")
+    response.headers["Content-Disposition"] = f"attachment; filename={full_filename}"
+    return response
+
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
